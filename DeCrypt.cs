@@ -2,7 +2,7 @@ public class Decryptor
 {
     public static string DeCrypt(string key, string message)
     {
-        var keyOrder = key
+        var numKey = key
             .Select((ch, index) => new { Char = ch, Index = index })
             .OrderBy(x => x.Char)
             .Select((x, index) => new { x.Index, Order = index })
@@ -10,24 +10,15 @@ public class Decryptor
             .Select(x => x.Order)
             .ToArray();
 
-        string[] subStrings = new string[key.Length];
-        Array.Fill(subStrings, string.Empty);
-
-        for (int i = 0, j = 0; i < message.Length; i++, j = j == (key.Length - 1) ? 0 : j + 1)
-            subStrings[j] += message[i];
-
-        string[] sortedStrings = new string[key.Length];
-
+        string[] charsOnKey = new string[key.Length];
         for (int i = 0; i < key.Length; i++)
-            sortedStrings[i] = subStrings[keyOrder[i]];
+            charsOnKey[i] = string.Concat(message.Skip(i).Where((_, j) => j % key.Length == 0));
 
-        string decryptedMessage = string.Empty;
+        string[] charsOnKeyOrdered = numKey.Select(order => charsOnKey[order]).ToArray();
 
-        for (int i = 0; i < sortedStrings.Max(s => s.Length); i++)
-            foreach (string str in sortedStrings)
-                if (i < str.Length)
-                    decryptedMessage += str[i];
-
-        return new string(decryptedMessage).Trim();
+        return string.Concat(Enumerable
+            .Range(0, charsOnKeyOrdered.Max(s => s.Length))
+            .SelectMany(i => charsOnKeyOrdered.Select(s => i < s.Length ? s[i] : '\0')))
+                .Trim();
     }
 }
